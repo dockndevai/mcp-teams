@@ -1,0 +1,59 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.dockndevai/mcp-teams",
+  "description": "Read Microsoft Teams teams, channels, chats and messages, and post/reply/send, safe by default.",
+  "repository": {
+    "url": "https://github.com/dockndevai/mcp-teams",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "@dockndevai/mcp-teams",
+      "version": "0.1.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "TEAMS_CLIENT_ID",
+          "description": "Entra (Azure AD) app (client) id. For browser sign-in, register a public client with redirect URI http://localhost.",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "TEAMS_TENANT_ID",
+          "description": "Directory tenant: a tenant id, or common | organizations | consumers (default common).",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "TEAMS_CLIENT_SECRET",
+          "description": "App secret for app-only (client-credentials) auth. Omit to use interactive browser sign-in.",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "TEAMS_TOKEN",
+          "description": "A pre-obtained Microsoft Graph bearer token (alternative to browser or app-only auth).",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "TEAMS_MODE",
+          "description": "Access mode: read-only | read-write | admin. Starts read-only; writes need read-write.",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "TEAMS_ALLOW_SEND",
+          "description": "Set true to permit posting messages (channel/chat send & reply). Off by default.",
+          "isRequired": false,
+          "isSecret": false
+        }
+      ]
+    }
+  ]
+}
