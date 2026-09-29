@@ -1,7 +1,7 @@
 {
   "name": "@dockndevai/mcp-teams",
   "mcpName": "io.github.dockndevai/mcp-teams",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Model Context Protocol server for Microsoft Teams (Microsoft Graph) — read teams, channels, chats and messages, and post/reply/send, with browser sign-in and safe-by-default access modes and guards.",
   "type": "module",
   "license": "MIT",
