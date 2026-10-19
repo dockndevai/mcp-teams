@@ -1,7 +1,7 @@
 {
   "name": "@dockndevai/mcp-teams",
   "mcpName": "io.github.dockndevai/mcp-teams",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Model Context Protocol server for Microsoft Teams (Microsoft Graph) — read teams, channels, chats and messages, and post/reply/send, with browser sign-in and safe-by-default access modes and guards.",
   "type": "module",
   "license": "MIT",
@@ -47,12 +47,12 @@
   ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
-    "zod": "^4.5.4"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/node": "^26.5.0",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.5"
   }
 }
