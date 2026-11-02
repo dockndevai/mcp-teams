@@ -125,7 +125,7 @@ export const readTools: ToolDef[] = [
     capability: "read",
     config: {
       title: "List chats",
-      description: "List the signed-in user's 1:1 and group chats (id, topic, type, last updated). Use a chat id with list_chat_messages.",
+      description: "List the signed-in user's 1:1 and group chats (id, topic, type, last updated). Use a chat id with list_chat_members or list_chat_messages.",
       inputSchema: {
         top: z.number().int().min(1).max(200).optional().describe("Maximum chats (capped by TEAMS_MAX_RESULTS)"),
       },
@@ -133,6 +133,21 @@ export const readTools: ToolDef[] = [
     handler: async (a, { client, policy }) => {
       policy.guard({ tool: "list_chats", capability: "read" });
       return jsonResult(await client.listChats(a.top as number | undefined));
+    },
+  },
+  {
+    name: "list_chat_members",
+    capability: "read",
+    config: {
+      title: "List chat members",
+      description:
+        "List the members of a 1:1 or group chat (display name, email, roles). Use this to see who is in a chat " +
+        "before reading or sending its messages.",
+      inputSchema: { chat_id: z.string().describe("Chat id (from list_chats)") },
+    },
+    handler: async (a, { client, policy }) => {
+      policy.guard({ tool: "list_chat_members", capability: "read" });
+      return jsonResult(await client.listChatMembers(a.chat_id as string));
     },
   },
   {

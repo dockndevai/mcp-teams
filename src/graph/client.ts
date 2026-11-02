@@ -220,6 +220,13 @@ export class GraphClient {
     return (data.value ?? []).map((c) => ({ id: c.id, topic: c.topic, chatType: c.chatType, lastUpdated: c.lastUpdatedDateTime }));
   }
 
+  async listChatMembers(chatId: string): Promise<Array<Record<string, unknown>>> {
+    const data = await this.request<{ value: Array<Record<string, unknown>> }>(
+      `/me/chats/${encodeURIComponent(chatId)}/members`,
+    );
+    return data.value ?? [];
+  }
+
   async listChatMessages(chatId: string, top?: number): Promise<MessageRef[]> {
     const n = Math.min(this.maxResults, top ?? this.maxResults);
     const data = await this.request<{ value: GraphMessage[] }>(
