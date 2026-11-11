@@ -123,12 +123,12 @@ describe("posting approvals (end to end)", () => {
   it("keeps the team and channel visible even when the message is far longer than the display limit", async () => {
     vi.spyOn(GraphClient.prototype, "sendChannelMessage").mockResolvedValue({ id: "new" });
     const { client, prompts } = await connect({});
-    await client.callTool({ name: "send_channel_message", arguments: { team_id: "T1", channel_id: "C1", message: "x".repeat(6000) } });
+    await client.callTool({ name: "send_channel_message", arguments: { team_id: "T1", channel_id: "C1", message: "x".repeat(20000) } });
     const p = prompts[0]!;
-    expect(p).toContain("… (+"); // the argument dump is truncated…
+    expect(p).toContain("not shown; covered by the fingerprint"); // an over-long prose body is summarised (the tool opts in)…
     expect(p).toContain("team: T1"); // …but the destination is shown outside it
     expect(p).toContain("channel: C1");
-    expect(p).toContain("message length: 6000 chars");
+    expect(p).toContain("message length: 20000 chars");
   });
 
   it("different arguments give a different fingerprint", async () => {
