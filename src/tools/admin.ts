@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { ToolDef } from "./types.js";
+import { messageDetails } from "./context.js";
 import { jsonResult, textResult } from "./types.js";
 
 /**
@@ -29,7 +30,15 @@ export const adminTools: ToolDef[] = [
       const messageId = a.message_id as string;
       const { dryRun } = policy.guard({ tool: "delete_channel_message", capability: "admin", destructive: true, team });
       if (dryRun) return textResult(`[dry-run] Would soft-delete message ${messageId} in team ${team}.`);
-      const ok = await confirm.confirm({ action: "delete channel message", target: messageId, details: { team } });
+      const channel = a.channel_id as string;
+      const current = await client.channelMessageContext(team, channel, messageId);
+      const ok = await confirm.confirm({
+        action: "delete channel message",
+        target: messageId,
+        details: { team, channel, ...messageDetails("message", current) },
+        // team + channel + message id + etag/lastModified/deleted: a message edited, reacted to or deleted while the human decided is refused.
+        probe: () => client.channelMessageVersion(team, channel, messageId),
+      });
       if (!ok.approved) return textResult(`Deletion cancelled — ${ok.reason}.`);
       await client.softDeleteChannelMessage(team, a.channel_id as string, messageId);
       return jsonResult({ deleted: messageId, note: "Soft-deleted (recoverable)." });

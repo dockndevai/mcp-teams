@@ -4,6 +4,30 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-11-11
+
+### Security
+- **Approval no longer fails open on timeout.** The human-approval prompt used the MCP SDK's default
+  60 s request timeout, and a timeout fell through to "approved" (the `TEAMS_ALLOW_SEND` /
+  `TEAMS_ALLOW_DELETE` gate had already passed). A prompt nobody answered therefore auto-approved a post
+  or a delete. A timeout is now a refusal, and the wait defaults to 5 minutes.
+
+### Added
+- **Approvals are bound to the exact action.** The prompt shows the tool, the full (secret-redacted)
+  arguments and a fingerprint; every approval and refusal is written to the audit log as
+  `"audit":"approval"` with the fingerprint, resource version and `approvedBy` (`human` / `flag-only`).
+  The same per-call binding applies to laya-guard `confirm` prompts.
+- **Approvals are bound to the target's version.** `delete_channel_message` reads a version token before
+  the prompt and again after the human answers, and refuses if it changed (team + channel + message id with
+  Graph's `etag`, `lastModifiedDateTime` and `deletedDateTime`).
+- `send_channel_message`, `reply_channel_message` and `send_chat_message` have no existing object to
+  version; they are bound to the fingerprint of the exact arguments. The prompt lists team/channel (or the
+  chat's type, topic and members, and the parent message for replies) and the message length outside the
+  1500-character arguments dump.
+- `TEAMS_REQUIRE_HUMAN_APPROVAL=true` — refuse these operations when the client cannot elicit.
+
+Tracking issue: https://github.com/dockndevai/mcp-core/issues/1
+
 ## [0.2.5] - 2026-11-09
 
 ### Changed

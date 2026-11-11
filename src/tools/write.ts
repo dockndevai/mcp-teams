@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { ToolDef } from "./types.js";
+import { chatDetails, messageDetails } from "./context.js";
 import { jsonResult, textResult } from "./types.js";
 
 /**
@@ -29,10 +30,13 @@ export const writeTools: ToolDef[] = [
       const team = a.team_id as string;
       const { dryRun } = policy.guard({ tool: "send_channel_message", capability: "write", team, requiresSend: true });
       if (dryRun) return textResult(`[dry-run] Would post to channel ${a.channel_id as string} in team ${team}.`);
+      // A post has no existing object to version: the approval is bound to the fingerprint of these exact
+      // arguments (team, channel, message). Team/channel/length sit outside the arguments dump (cut at 1500
+      // chars) so they stay visible however long the message is.
       const ok = await confirm.confirm({
         action: "post channel message",
         target: `team ${team} / channel ${a.channel_id as string}`,
-        details: { preview: (a.message as string).slice(0, 80) },
+        details: { team, channel: a.channel_id as string, format: a.html ? "html" : "text", "message length": `${(a.message as string).length} chars` },
       });
       if (!ok.approved) return textResult(`Post cancelled — ${ok.reason}.`);
       return jsonResult(await client.sendChannelMessage(team, a.channel_id as string, a.message as string, Boolean(a.html)));
@@ -58,10 +62,18 @@ export const writeTools: ToolDef[] = [
       const team = a.team_id as string;
       const { dryRun } = policy.guard({ tool: "reply_channel_message", capability: "write", team, requiresSend: true });
       if (dryRun) return textResult(`[dry-run] Would reply to message ${a.message_id as string} in team ${team}.`);
+      // The reply lands in the parent message's thread: show the parent. Bound to the args fingerprint.
+      const parent = await client.channelMessageContext(team, a.channel_id as string, a.message_id as string);
       const ok = await confirm.confirm({
         action: "reply to channel message",
         target: `message ${a.message_id as string}`,
-        details: { preview: (a.message as string).slice(0, 80) },
+        details: {
+          team,
+          channel: a.channel_id as string,
+          ...messageDetails("parent", parent),
+          format: a.html ? "html" : "text",
+          "message length": `${(a.message as string).length} chars`,
+        },
       });
       if (!ok.approved) return textResult(`Reply cancelled — ${ok.reason}.`);
       return jsonResult(
@@ -84,10 +96,12 @@ export const writeTools: ToolDef[] = [
       const { dryRun } = policy.guard({ tool: "send_chat_message", capability: "write", requiresSend: true });
       const chatId = a.chat_id as string;
       if (dryRun) return textResult(`[dry-run] Would send a message to chat ${chatId}.`);
+      // A chat id is opaque: show who is in the chat. Bound to the args fingerprint (no existing object to version).
+      const chat = await client.chatContext(chatId);
       const ok = await confirm.confirm({
         action: "send chat message",
         target: `chat ${chatId}`,
-        details: { preview: (a.message as string).slice(0, 80) },
+        details: { ...chatDetails(chat), format: a.html ? "html" : "text", "message length": `${(a.message as string).length} chars` },
       });
       if (!ok.approved) return textResult(`Send cancelled — ${ok.reason}.`);
       return jsonResult(await client.sendChatMessage(chatId, a.message as string, Boolean(a.html)));

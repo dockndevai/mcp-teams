@@ -25,6 +25,8 @@ export interface SecurityConfig {
   /** Validate + log writes without executing them. */
   dryRun: boolean;
   auditLog: boolean;
+  /** Refuse posts / deletes that no human can approve (no elicitation support) instead of trusting the flags alone. */
+  requireHumanApproval: boolean;
 }
 
 export class PolicyError extends Error {

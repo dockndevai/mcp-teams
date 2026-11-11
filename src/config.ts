@@ -114,6 +114,7 @@ export function loadConfig(): AppConfig {
       allowDelete: bool("TEAMS_ALLOW_DELETE", false),
       dryRun: bool("TEAMS_DRY_RUN", false),
       auditLog: bool("TEAMS_AUDIT_LOG", true),
+      requireHumanApproval: bool("TEAMS_REQUIRE_HUMAN_APPROVAL", false),
     },
   };
 }
