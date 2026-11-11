@@ -4,7 +4,7 @@
 [![CI](https://github.com/dockndevai/mcp-teams/actions/workflows/ci.yml/badge.svg)](https://github.com/dockndevai/mcp-teams/actions/workflows/ci.yml)
 [![licence](https://img.shields.io/badge/licence-MIT-blue)](LICENSE)
 
-A **safe-by-default** [Model Context Protocol](https://modelcontextprotocol.io) server for **Microsoft Teams**, over [Microsoft Graph](https://learn.microsoft.com/graph/overview). It lets an agent read and operate Teams — list joined teams, channels and members, read channel messages and threaded replies, read 1:1/group chats and their messages, and (in higher modes) post to channels, reply in threads, send chat messages, and soft-delete a message.
+A **safe-by-default** [Model Context Protocol](https://modelcontextprotocol.io) server for **Microsoft Teams**, over [Microsoft Graph](https://learn.microsoft.com/graph/overview). It lets an agent read and operate Teams — list joined teams, channels and members, read channel messages and threaded replies, read 1:1/group chats, their members, and their messages, and (in higher modes) post to channels, reply in threads, send chat messages, and soft-delete a message.
 
 **Browser sign-in:** on first run it opens your browser to the Microsoft sign-in page, then caches the token and refreshes it silently — the server never sees your password.
 
@@ -24,6 +24,7 @@ The server starts **read-only** (see [Safe by default](#safe-by-default)); highe
 | `get_channel_message` | one channel message + body | read-only |
 | `list_message_replies` | a channel message's thread | read-only |
 | `list_chats` | the user's 1:1 / group chats | read-only |
+| `list_chat_members` | members of a 1:1 / group chat | read-only |
 | `list_chat_messages` | messages in a chat | read-only |
 | `send_channel_message` | post to a channel | read-write + `TEAMS_ALLOW_SEND` |
 | `reply_channel_message` | reply in a channel thread | read-write + `TEAMS_ALLOW_SEND` |

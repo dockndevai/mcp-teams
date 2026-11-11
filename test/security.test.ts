@@ -78,6 +78,21 @@ describe("delete gating", () => {
   });
 });
 
+describe("chat tools are not team-scoped", () => {
+  it("list_chat_members needs only read capability — team allowlist/protection don't apply", () => {
+    const p = makePolicy({ mode: "read-only", teamAllowlist: ["team-a"], protectedTeams: ["exec-team"] });
+    expect(() => p.guard({ tool: "list_chat_members", capability: "read" })).not.toThrow();
+  });
+  it("list_chat_members never requires send/delete gating, even with both disabled", () => {
+    const p = makePolicy({ mode: "read-only", allowSend: false, allowDelete: false });
+    expect(() => p.guard({ tool: "list_chat_members", capability: "read" })).not.toThrow();
+  });
+  it("is dry-run-exempt like every other read", () => {
+    const p = makePolicy({ mode: "read-only", dryRun: true });
+    expect(p.guard({ tool: "list_chat_members", capability: "read" }).dryRun).toBe(false);
+  });
+});
+
 describe("dry run", () => {
   it("flags writes but not reads", () => {
     const p = makePolicy({ mode: "read-write", allowSend: true, dryRun: true });
