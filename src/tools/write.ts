@@ -35,6 +35,7 @@ export const writeTools: ToolDef[] = [
       // chars) so they stay visible however long the message is.
       const ok = await confirm.confirm({
         action: "post channel message",
+        summarizeLargeArgs: true, // prose body: recipients/destination are shown separately
         target: `team ${team} / channel ${a.channel_id as string}`,
         details: { team, channel: a.channel_id as string, format: a.html ? "html" : "text", "message length": `${(a.message as string).length} chars` },
       });
@@ -66,6 +67,7 @@ export const writeTools: ToolDef[] = [
       const parent = await client.channelMessageContext(team, a.channel_id as string, a.message_id as string);
       const ok = await confirm.confirm({
         action: "reply to channel message",
+        summarizeLargeArgs: true, // prose body: recipients/destination are shown separately
         target: `message ${a.message_id as string}`,
         details: {
           team,
@@ -100,6 +102,7 @@ export const writeTools: ToolDef[] = [
       const chat = await client.chatContext(chatId);
       const ok = await confirm.confirm({
         action: "send chat message",
+        summarizeLargeArgs: true, // prose body: recipients/destination are shown separately
         target: `chat ${chatId}`,
         details: { ...chatDetails(chat), format: a.html ? "html" : "text", "message length": `${(a.message as string).length} chars` },
       });
