@@ -8,6 +8,7 @@
  * Covers the joined teams, their channels and channel messages/replies, and 1:1/group chats and
  * their messages. Message bodies can be HTML; they are returned as-is so an agent can read them.
  */
+import { createHash } from "node:crypto";
 import type { TeamsConnection } from "../config.js";
 import { createTokenProvider, type TokenProvider } from "./auth.js";
 
@@ -82,6 +83,18 @@ export interface ChatRef {
   lastUpdated?: string;
 }
 
+/** Short, stable digest of an object id + its change marker, safe to show a human and to log. */
+export function versionToken(id: string, marker: string | undefined): string {
+  return createHash("sha256").update(`${id}|${marker ?? ""}`).digest("hex").slice(0, 12);
+}
+
+/** Context about a chat, shown to the human at approval time (display only, not part of any version). */
+export interface ChatContext {
+  topic?: string;
+  chatType?: string;
+  members?: string[];
+}
+
 export class GraphClient {
   private readonly base: string;
   private readonly timeoutMs: number;
@@ -137,6 +150,61 @@ export class GraphClient {
       throw new GraphError(0, err instanceof Error ? err.message : String(err));
     } finally {
       clearTimeout(timer);
+    }
+  }
+
+  /** GET that maps 404 to `undefined` (the object does not exist) and rethrows anything else. */
+  private async getOrUndefined<T>(path: string): Promise<T | undefined> {
+    try {
+      return await this.request<T>(path);
+    } catch (err) {
+      if (err instanceof GraphError && err.status === 404) return undefined;
+      throw err;
+    }
+  }
+
+  /**
+   * Version token for a channel message, pinned across an approval prompt: team + channel + message id
+   * plus the message's `etag` (Graph's version number for a chat message), `lastModifiedDateTime` and
+   * `deletedDateTime`. An edit, a reaction or a delete by someone else while the prompt is open changes
+   * it, so the approval fails closed (re-ask); it never fails open. The message is read without `$select`
+   * because Graph's channel-message GET does not reliably support it. `undefined` when the message does
+   * not exist; transport errors throw.
+   */
+  async channelMessageVersion(teamId: string, channelId: string, messageId: string): Promise<string | undefined> {
+    const m = await this.getOrUndefined<Record<string, unknown>>(
+      `/teams/${encodeURIComponent(teamId)}/channels/${encodeURIComponent(channelId)}/messages/${encodeURIComponent(messageId)}`,
+    );
+    if (!m) return undefined;
+    const marker = [m.etag, m.lastModifiedDateTime, m.deletedDateTime].map((x) => (x == null ? "" : String(x))).join("|");
+    return versionToken(`${teamId}/${channelId}/${String(m.id ?? messageId)}`, marker);
+  }
+
+  /** Best-effort display context for a channel message (who wrote what the human is acting on). Never throws. */
+  async channelMessageContext(teamId: string, channelId: string, messageId: string): Promise<MessageRef | undefined> {
+    try {
+      return await this.getChannelMessage(teamId, channelId, messageId);
+    } catch {
+      return undefined;
+    }
+  }
+
+  /** Best-effort display context for a chat (topic, type, member names). Never throws. */
+  async chatContext(chatId: string): Promise<ChatContext | undefined> {
+    try {
+      const c = await this.getOrUndefined<{
+        topic?: string | null;
+        chatType?: string;
+        members?: Array<{ displayName?: string | null }>;
+      }>(`/me/chats/${encodeURIComponent(chatId)}?$expand=members`);
+      if (!c) return undefined;
+      return {
+        topic: c.topic ?? undefined,
+        chatType: c.chatType,
+        members: (c.members ?? []).map((m) => m.displayName).filter((x): x is string => Boolean(x)),
+      };
+    } catch {
+      return undefined;
     }
   }
 

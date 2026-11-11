@@ -23,6 +23,14 @@ automation and grant it the least access it needs.
   require `read-write` mode **and** `TEAMS_ALLOW_SEND=true`, because a posted message is visible to
   others. When the client supports MCP elicitation they also pause for a human to approve the exact
   target and preview first.
+- **Require a human.** Set `TEAMS_REQUIRE_HUMAN_APPROVAL=true` so `send_channel_message`,
+  `reply_channel_message`, `send_chat_message`, `delete_channel_message` (and laya-guard `confirm` verdicts)
+  are refused when the client cannot show an approval prompt. Each approval is bound to the exact tool and
+  arguments (fingerprint). `delete_channel_message` is also bound to the message's version (team, channel,
+  message id, Graph `etag`, `lastModifiedDateTime`, `deletedDateTime`); if it changed while the human was
+  deciding, the action is refused. Posts and replies have no existing object to version; they are bound to
+  the fingerprint of the exact arguments shown. Approval receipts are written to the audit log
+  (`"audit":"approval"`, with `approvedBy` = `human` or `flag-only`).
 - **Scope to teams.** `TEAMS_TEAM_ALLOWLIST` confines posts/moderation to named teams;
   `TEAMS_PROTECTED_TEAMS` marks teams that may be read but never posted to or moderated. (Chats are
   not team-scoped; the allowlist does not apply to `send_chat_message`.)
@@ -34,6 +42,12 @@ automation and grant it the least access it needs.
 
 - Team allowlist/protection is enforced on the team a call names. Chat operations are bounded by the
   token's scopes and chat membership, not by team rules.
+- The approval prompt shows at most 1500 characters of the arguments; the team, channel and message
+  length are listed separately, but a message longer than that is only partly visible to the human (the
+  fingerprint still covers all of it).
+- The version pin is read from Graph before and after the prompt, not passed to the `softDelete` call, so a
+  change in the instant between the second read and the request is not caught. Any edit, reaction or delete
+  of the message while the prompt is open fails closed and the operation must be re-requested.
 - Posting trusts the message body you pass; there is no outbound content filtering beyond the
   human-confirmation prompt. Keep `TEAMS_ALLOW_SEND` off unless you need it.
 
